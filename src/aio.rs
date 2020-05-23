@@ -69,9 +69,15 @@ mod tokio_aio {
     #[async_trait]
     impl Connect for Tokio {
         async fn connect_tcp(socket_addr: SocketAddr) -> RedisResult<ActualConnection> {
-            Ok(TcpStreamTokio::connect(&socket_addr)
-                .await
-                .map(ActualConnection::TcpTokio)?)
+            match TcpStreamTokio::connect(&socket_addr).await.map(ActualConnection::TcpTokio) {
+                Ok(con) => {
+                    println!("Tcp stream success");
+                    Ok(con)
+                }
+                Err(err) => {
+                    panic!("Error tcp stream tokio {}", err);
+                }
+            }
         }
         #[cfg(unix)]
         async fn connect_unix(path: &Path) -> RedisResult<ActualConnection> {
