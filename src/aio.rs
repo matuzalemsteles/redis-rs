@@ -397,6 +397,8 @@ async fn connect_simple<T: Connect>(
         ConnectionAddr::Tcp(ref host, port) => {
             let socket_addr = get_socket_addrs(host, port)?;
 
+            println!("Start connecting tcp");
+
             match <T>::connect_tcp(socket_addr).await {
                 Ok(val) => {
                     println!("Connect tcp success");
