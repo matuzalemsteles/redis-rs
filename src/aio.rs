@@ -391,7 +391,15 @@ async fn connect_simple<T: Connect>(
         ConnectionAddr::Tcp(ref host, port) => {
             let socket_addr = get_socket_addrs(host, port)?;
 
-            <T>::connect_tcp(socket_addr).await?
+            match <T>::connect_tcp(socket_addr).await {
+                Ok(val) => {
+                    println!("Connect tcp success");
+                    val
+                }
+                Err(err) => {
+                    panic!("Err connect tcp {}", err);
+                }
+            }
         }
 
         #[cfg(unix)]
@@ -809,7 +817,15 @@ impl MultiplexedConnection {
             pipeline,
             db: connection_info.db,
         };
-        authenticate(connection_info, &mut con).await?;
+        match authenticate(connection_info, &mut con).await {
+            Ok(v) => {
+                println!("Auth success");
+                v
+            }
+            Err(e) => {
+                panic!("Error authenticate {}", e);
+            }
+        };
         Ok((con, driver))
     }
 }
