@@ -395,7 +395,18 @@ async fn connect_simple<T: Connect>(
         }
 
         #[cfg(unix)]
-        ConnectionAddr::Unix(ref path) => <T>::connect_unix(path).await?,
+        ConnectionAddr::Unix(ref path) => {
+
+            match <T>::connect_unix(path).await {
+                Ok(val) => {
+                    println!("Connect unix success");
+                    val
+                }
+                Err(err) => {
+                    panic!("Err connect unix {}", err);
+                }
+            }
+        },
 
         #[cfg(not(unix))]
         ConnectionAddr::Unix(_) => {
@@ -907,6 +918,7 @@ mod connection_manager {
         /// the Tokio executor.
         pub async fn new(connection_info: ConnectionInfo) -> RedisResult<Self> {
             // Create a MultiplexedConnection and wait for it to be established
+            println!("ConnectionManager::new");
 
             #[cfg(all(feature = "tokio-comp", not(feature = "async-std-comp")))]
             let con = connect_simple::<tokio_aio::Tokio>(&connection_info).await?;
@@ -916,16 +928,39 @@ mod connection_manager {
 
             #[cfg(all(feature = "tokio-comp", feature = "async-std-comp"))]
             let con = if tokio::runtime::Handle::try_current().is_ok() {
-                connect_simple::<tokio_aio::Tokio>(&connection_info).await?
+                match connect_simple::<tokio_aio::Tokio>(&connection_info).await {
+                    Ok(val) => {
+                        println!("Connect tokio success");
+                        val
+                    }
+                    Err(err) => {
+                        panic!("Error connect {}", err);
+                    }
+                }
             } else {
-                connect_simple::<aio_async_std::AsyncStd>(&connection_info).await?
+                match connect_simple::<aio_async_std::AsyncStd>(&connection_info).await {
+                    Ok(val) => {
+                        println!("Connect async success");
+                        val
+                    }
+                    Err(err) => {
+                        panic!("Error connect {}", err);
+                    }
+                }
             };
 
             #[cfg(all(not(feature = "tokio-comp"), not(feature = "async-std-comp")))]
             compile_error!("tokio-comp or async-std-comp features required for aio feature");
 
-            let (connection, driver) =
-                MultiplexedConnection::create_connection(&connection_info, con).await?;
+            let (connection, driver) = match MultiplexedConnection::create_connection(&connection_info, con).await {
+                Ok(val) => {
+                    println!("Create connect success");
+                    val
+                }
+                Err(err) => {
+                    panic!("Error connect {}", err);
+                }
+            };
 
             // Spawn the driver that drives the connection future
             tokio::spawn(driver);
