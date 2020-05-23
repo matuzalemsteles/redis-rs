@@ -69,6 +69,7 @@ mod tokio_aio {
     #[async_trait]
     impl Connect for Tokio {
         async fn connect_tcp(socket_addr: SocketAddr) -> RedisResult<ActualConnection> {
+            println!("Connect tcp tokio start {}", socket_addr);
             match TcpStreamTokio::connect(&socket_addr).await.map(ActualConnection::TcpTokio) {
                 Ok(con) => {
                     println!("Tcp stream success");
@@ -397,7 +398,7 @@ async fn connect_simple<T: Connect>(
         ConnectionAddr::Tcp(ref host, port) => {
             let socket_addr = get_socket_addrs(host, port)?;
 
-            println!("Start connecting tcp");
+            println!("Start connecting tcp {}", socket_addr);
 
             match <T>::connect_tcp(socket_addr).await {
                 Ok(val) => {
