@@ -418,6 +418,8 @@ async fn connect_simple<T: Connect>(
 
         #[cfg(not(unix))]
         ConnectionAddr::Unix(_) => {
+            panic!("Cannot connect to unix sockets on this platform");
+
             return Err(RedisError::from((
                 ErrorKind::InvalidClientConfig,
                 "Cannot connect to unix sockets \
@@ -937,10 +939,26 @@ mod connection_manager {
             println!("ConnectionManager::new");
 
             #[cfg(all(feature = "tokio-comp", not(feature = "async-std-comp")))]
-            let con = connect_simple::<tokio_aio::Tokio>(&connection_info).await?;
+            let con = match connect_simple::<tokio_aio::Tokio>(&connection_info).await {
+                Ok(val) => {
+                    println!("Connect tokio success");
+                    val
+                }
+                Err(err) => {
+                    panic!("Error connect {}", err);
+                }
+            };
 
             #[cfg(all(not(feature = "tokio-comp"), feature = "async-std-comp"))]
-            let con = connect_simple::<aio_async_std::AsyncStd>(&connection_info).await?;
+            let con = match connect_simple::<aio_async_std::AsyncStd>(&connection_info).await {
+                Ok(val) => {
+                    println!("Connect async success");
+                    val
+                }
+                Err(err) => {
+                    panic!("Error connect {}", err);
+                }
+            };
 
             #[cfg(all(feature = "tokio-comp", feature = "async-std-comp"))]
             let con = if tokio::runtime::Handle::try_current().is_ok() {
