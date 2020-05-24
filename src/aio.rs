@@ -970,25 +970,13 @@ mod connection_manager {
             };
 
             #[cfg(all(feature = "tokio-comp", feature = "async-std-comp"))]
-            let con = if tokio::runtime::Handle::try_current().is_ok() {
-                match connect_simple::<tokio_aio::Tokio>(&connection_info).await {
-                    Ok(val) => {
-                        println!("Connect tokio success");
-                        val
-                    }
-                    Err(err) => {
-                        panic!("Error connect {}", err);
-                    }
+            let con = match connect_simple::<aio_async_std::AsyncStd>(&connection_info).await {
+                Ok(val) => {
+                    println!("Connect async success");
+                    val
                 }
-            } else {
-                match connect_simple::<aio_async_std::AsyncStd>(&connection_info).await {
-                    Ok(val) => {
-                        println!("Connect async success");
-                        val
-                    }
-                    Err(err) => {
-                        panic!("Error connect {}", err);
-                    }
+                Err(err) => {
+                    panic!("Error connect {}", err);
                 }
             };
 
